@@ -1,0 +1,49 @@
+﻿@page "/Login"
+@inject IRepositorio repositorio
+@inject SweetAlertService swal
+@inject ILoginService loginService
+@inject NavigationManager navigationManager
+
+<h3>Login</h3>
+
+<EditForm Model="userCredencial" OnValidSubmit="LoguearUsuario">
+    <DataAnnotationsValidator/>
+
+    <div class="mb-3">
+        <label>Email:</label>
+        <div>
+            <InputText class="form-control" @bind-Value="userCredencial.Email" />
+            <ValidationMessage For="@(() => userCredencial.Email)" />
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label>Password:</label>
+        <div>
+            <InputText type="password" class="form-control" @bind-Value="userCredencial.Psw" />
+            <ValidationMessage For="@(() => userCredencial.Psw)" />
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Login</button>
+</EditForm>
+
+@code {
+    private UserCredencialDTO userCredencial = new UserCredencialDTO();
+
+    private async Task LoguearUsuario()
+    {
+        var respuestaHTTP = await repositorio.Post<UserCredencialDTO, TokenDTO>("tsapi/usuarios/login", userCredencial);
+
+        if (respuestaHTTP.Error)
+        {
+            var mensajeError = await respuestaHTTP.ObtenerMensajeError();
+            await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+        }
+        else
+        {
+            await loginService.Login(respuestaHTTP.Response!);
+            navigationManager.NavigateTo("");
+        }
+    }
+}
